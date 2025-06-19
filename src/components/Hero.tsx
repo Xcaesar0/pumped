@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAppKit } from '@reown/appkit/react'
 import { useAccount } from 'wagmi'
 import { useUser } from '../hooks/useUser'
 import { useReferralPersistence } from '../hooks/useReferralPersistence'
@@ -8,7 +8,7 @@ import ReferralPage from './ReferralPage'
 
 const Hero = () => {
   const [hoveredButton, setHoveredButton] = useState<string | null>(null)
-  const { open } = useWeb3Modal()
+  const { open } = useAppKit()
   const { isConnected } = useAccount()
   const { user, loading } = useUser()
   const { hasPendingReferral, getPendingReferral } = useReferralPersistence()

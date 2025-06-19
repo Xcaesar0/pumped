@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAppKit } from '@reown/appkit/react'
 import { useAccount } from 'wagmi'
 import { User, getUserByReferralCode, getUserByReferralLink } from '../lib/supabase'
 import { Gift, Users, Star, Wallet, ArrowRight, CheckCircle, Crown } from 'lucide-react'
@@ -12,7 +12,7 @@ const ReferralPage: React.FC<ReferralPageProps> = ({ referralCode }) => {
   const [referrer, setReferrer] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { open } = useWeb3Modal()
+  const { open } = useAppKit()
   const { isConnected } = useAccount()
 
   useEffect(() => {
