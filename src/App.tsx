@@ -6,6 +6,7 @@ import { config } from './config/wagmi'
 import { useReferralPersistence } from './hooks/useReferralPersistence'
 import Header from './components/Header';
 import Hero from './components/Hero';
+import AdminRoute from './components/AdminRoute';
 
 // Get projectId from environment variables
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
@@ -28,6 +29,13 @@ const queryClient = new QueryClient()
 function AppContent() {
   // Initialize referral persistence on app load
   useReferralPersistence()
+
+  // Check if this is the admin route
+  const isAdminRoute = window.location.pathname === '/admin'
+
+  if (isAdminRoute) {
+    return <AdminRoute />
+  }
 
   return (
     <div className="min-h-screen text-white overflow-x-hidden" style={{ backgroundColor: '#1A1A1A' }}>
