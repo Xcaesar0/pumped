@@ -66,23 +66,9 @@ const Header = () => {
               )}
 
               {/* Connect Wallet Button */}
-              <button 
-                onClick={handleWalletClick}
-                disabled={loading}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 shadow-lg transform hover:scale-[1.02] active:scale-[0.98] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: isConnected ? '#ef4444' : '#52D593' }}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
-                    <span className="text-sm font-semibold text-black">Loading...</span>
-                  </>
-                ) : (
-                  <>
-                    <w3m-button />
-                  </>
-                )}
-              </button>
+              <div className="flex items-center">
+                <w3m-button />
+              </div>
             </div>
           </div>
 

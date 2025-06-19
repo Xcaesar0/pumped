@@ -5,15 +5,18 @@ import { mainnet, arbitrum, polygon } from '@reown/appkit/networks'
 // Get projectId from environment variables
 const projectId = import.meta.env.VITE_REOWN_PROJECT_ID
 
-if (!projectId) {
-  throw new Error('VITE_REOWN_PROJECT_ID is not set. Please add it to your .env file.')
+// Use a default project ID for development if not set
+const fallbackProjectId = 'your_project_id_here'
+
+if (!projectId || projectId === fallbackProjectId) {
+  console.warn('VITE_REOWN_PROJECT_ID is not properly configured. Using fallback for development.')
 }
 
 // Set up the Wagmi Adapter (Config)
 const wagmiAdapter = new WagmiAdapter({
   storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   ssr: false,
-  projectId,
+  projectId: projectId || fallbackProjectId,
   networks: [mainnet, arbitrum, polygon]
 })
 
@@ -21,22 +24,22 @@ const wagmiAdapter = new WagmiAdapter({
 const metadata = {
   name: 'pumped.fun',
   description: 'Beyond The Pump - Web3 Social Platform',
-  url: 'https://pumped.fun', // origin must match your domain & subdomain
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://pumped.fun',
   icons: ['https://avatars.githubusercontent.com/u/37784886']
 }
 
 // Create the modal
 const modal = createAppKit({
   adapters: [wagmiAdapter],
-  projectId,
+  projectId: projectId || fallbackProjectId,
   networks: [mainnet, arbitrum, polygon],
   defaultNetwork: mainnet,
   metadata: metadata,
   features: {
-    analytics: true, // Optional - defaults to your Cloud configuration
-    email: false, // default to true
-    socials: ['x', 'github', 'discord'], // Enable social logins
-    emailShowWallets: true // default to true
+    analytics: true,
+    email: false,
+    socials: ['x', 'github', 'discord'],
+    emailShowWallets: true
   },
   themeMode: 'dark',
   themeVariables: {

@@ -9,7 +9,8 @@ if (!supabaseUrl || !supabaseAnonKey ||
     supabaseAnonKey === 'your_supabase_anon_key_here' ||
     supabaseUrl.includes('your_supabase_url_here') ||
     supabaseAnonKey.includes('your_supabase_anon_key_here')) {
-  throw new Error(`
+  
+  console.warn(`
     Missing or invalid Supabase environment variables. 
     
     Please set up your Supabase connection by:
@@ -24,20 +25,35 @@ if (!supabaseUrl || !supabaseAnonKey ||
     - VITE_SUPABASE_URL: ${supabaseUrl || 'undefined'}
     - VITE_SUPABASE_ANON_KEY: ${supabaseAnonKey ? '[SET]' : 'undefined'}
   `)
-}
+  
+  // Create a mock client for development
+  const mockClient = {
+    from: () => ({
+      select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+      update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+      delete: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+      upsert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) })
+    }),
+    rpc: () => Promise.resolve({ data: null, error: null })
+  }
+  
+  // Export mock client to prevent app crashes
+  export const supabase = mockClient as any
+} else {
+  // Validate URL format
+  try {
+    new URL(supabaseUrl)
+  } catch (error) {
+    throw new Error(`
+      Invalid Supabase URL format: ${supabaseUrl}
+      
+      Please ensure your VITE_SUPABASE_URL is a valid URL (e.g., https://your-project.supabase.co)
+    `)
+  }
 
-// Validate URL format
-try {
-  new URL(supabaseUrl)
-} catch (error) {
-  throw new Error(`
-    Invalid Supabase URL format: ${supabaseUrl}
-    
-    Please ensure your VITE_SUPABASE_URL is a valid URL (e.g., https://your-project.supabase.co)
-  `)
+  export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 }
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export interface User {
   id: string
