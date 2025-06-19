@@ -20,8 +20,10 @@ export const useXAccountNotification = (user: User | null) => {
 
     setLoading(true)
     try {
-      // Mock - always return false for now
-      setHasXAccount(false)
+      // MOCKUP: Check if user has any X connection (even if it's a mock one)
+      // This will check the social_connections table for X platform
+      const hasConnection = user.x_connected_at !== null
+      setHasXAccount(hasConnection)
     } catch (error) {
       console.error('Failed to check X account status:', error)
       setHasXAccount(false)
@@ -32,7 +34,7 @@ export const useXAccountNotification = (user: User | null) => {
 
   const triggerXAccountCheck = async () => {
     if (!user || hasXAccount) return
-    // Mock function - no actual functionality
+    // MOCKUP: Show notification for X account connection
     setShowNotification(true)
   }
 

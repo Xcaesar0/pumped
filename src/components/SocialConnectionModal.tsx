@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { X, MessageCircle, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
-import { User, SocialConnection, awardConnectionPoints } from '../lib/supabase'
+import { User, SocialConnection } from '../lib/supabase'
 import { useSocialConnections } from '../hooks/useSocialConnections'
-import { xOAuthService } from '../services/xAuth'
 
 interface SocialConnectionModalProps {
   user: User
@@ -56,7 +55,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
       color: 'text-gray-300',
       bgColor: 'bg-gray-500/20',
       borderColor: 'border-gray-500/30',
-      description: 'Connect your X (Twitter) account to earn 100 points'
+      description: 'Connect your X (Twitter) account to earn 100 points (MOCKUP - No real connection)'
     }
   }
 
@@ -117,30 +116,24 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
     }
   }, [platform, initialLoadComplete])
 
-  // Check for OAuth callback on component mount
+  // Check for OAuth callback on component mount - MOCKUP VERSION
   useEffect(() => {
     if (platform === 'x') {
       handleOAuthCallback()
     }
   }, [platform])
 
-  // Check for final OAuth redirect results
+  // Check for final OAuth redirect results - MOCKUP VERSION
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const connectSuccess = urlParams.get('x_connect_success')
     const connectError = urlParams.get('x_connect_error')
 
     if (connectSuccess === 'true') {
-      setSuccess(true)
-      setLoading(false)
-      // Reload connections to show the new X connection
-      loadConnections()
+      // MOCKUP: Simulate successful X connection
+      handleMockXConnection()
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname)
-      // Auto-close modal after success
-      setTimeout(() => {
-        onClose()
-      }, 2000)
     } else if (connectError) {
       setError(decodeURIComponent(connectError))
       setLoading(false)
@@ -228,6 +221,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
     }
   }
 
+  // MOCKUP: Handle X connection
   const handleXConnect = async () => {
     // Prevent duplicate connections by checking if one already exists
     if (connected || loading) {
@@ -238,14 +232,13 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
     setError(null)
 
     try {
-      // Check if X OAuth is properly configured
-      const clientId = import.meta.env.VITE_X_CLIENT_ID
-      if (!clientId) {
-        throw new Error('X OAuth is not configured. Please contact support.')
-      }
-
-      // Initiate real X OAuth flow
-      await xOAuthService.initiateOAuth(user.id)
+      console.log('MOCKUP: Starting X OAuth flow for user:', user.id)
+      
+      // Simulate OAuth delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Simulate successful connection
+      await handleMockXConnection()
       
     } catch (err) {
       console.error('X OAuth initiation error:', err)
@@ -254,52 +247,39 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
     }
   }
 
-  const handleOAuthCallback = async () => {
+  // MOCKUP: Simulate successful X connection
+  const handleMockXConnection = async () => {
     try {
-      // Check if this is an OAuth callback
-      const callbackData = xOAuthService.handleOAuthCallback()
-      if (!callbackData) return
-
-      const { code, state } = callbackData
-
-      // Verify state parameter
-      if (!xOAuthService.verifyState(state)) {
-        throw new Error('Invalid OAuth state parameter')
-      }
-
       setLoading(true)
       setError(null)
 
-      // Get stored OAuth state
-      const oauthState = xOAuthService.getOAuthState()
-      if (!oauthState) {
-        throw new Error('OAuth state not found')
+      // Create mock X connection
+      const mockXConnection: Omit<SocialConnection, 'id' | 'connected_at'> = {
+        user_id: user.id,
+        platform: 'x' as const,
+        platform_user_id: 'mock_x_user_' + Date.now(),
+        platform_username: 'MockUser' + Math.floor(Math.random() * 1000),
+        is_active: true
       }
 
-      // The edge function will handle the token exchange and user creation
-      // We just need to redirect to it with the authorization code
-      const callbackUrl = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x-oauth-callback`)
-      callbackUrl.searchParams.set('code', code)
-      callbackUrl.searchParams.set('state', oauthState.userId)
-      callbackUrl.searchParams.set('code_verifier', oauthState.codeVerifier)
-
-      // Clean up OAuth state
-      xOAuthService.clearOAuthState()
-
-      // Redirect to the edge function
-      window.location.href = callbackUrl.toString()
-
-    } catch (err) {
-      console.error('OAuth callback error:', err)
-      setError(err instanceof Error ? err.message : 'OAuth authentication failed')
+      await addConnection(mockXConnection)
+      setSuccess(true)
       setLoading(false)
       
-      // Clean up OAuth state on error
-      xOAuthService.clearOAuthState()
-      
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname)
+      // Auto-close modal after success
+      setTimeout(() => {
+        onClose()
+      }, 2000)
+    } catch (err) {
+      console.error('Mock X connection error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create mock X connection')
+      setLoading(false)
     }
+  }
+
+  const handleOAuthCallback = async () => {
+    // MOCKUP: No real OAuth callback handling
+    console.log('MOCKUP: OAuth callback handling (no real implementation)')
   }
 
   const verifyTelegramAuth = (authData: TelegramUser): boolean => {
@@ -389,6 +369,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
               <h2 className="text-xl font-bold text-white">{config.name}</h2>
               <p className="text-sm text-gray-400">
                 {connected ? 'Connected' : 'Not connected'}
+                {platform === 'x' && <span className="text-yellow-400 ml-1">(MOCKUP)</span>}
               </p>
             </div>
           </div>
@@ -421,7 +402,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
           <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center space-x-2">
             <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" />
             <span className="text-sm text-blue-400">
-              {platform === 'x' ? 'Redirecting to X authentication...' : 'Processing Telegram connection...'}
+              {platform === 'x' ? 'Creating mock X connection...' : 'Processing Telegram connection...'}
             </span>
           </div>
         )}
@@ -442,6 +423,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
             <div className="flex items-center space-x-2 mb-2">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span className="text-sm font-medium text-green-400">Connected Account</span>
+              {platform === 'x' && <span className="text-xs text-yellow-400">(MOCKUP)</span>}
             </div>
             <p className="text-sm text-gray-300">@{existingConnection.platform_username}</p>
             <p className="text-xs text-gray-400 mt-1">
@@ -487,7 +469,7 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
                 )}
               </>
             ) : (
-              /* X Connection Button */
+              /* X Connection Button - MOCKUP */
               <div className="text-center">
                 <button
                   onClick={handleXConnect}
@@ -500,16 +482,16 @@ const SocialConnectionModal: React.FC<SocialConnectionModalProps> = ({ user, pla
                 >
                   <Icon className="w-5 h-5 text-gray-300" />
                   <span className="font-medium text-white">
-                    {loading ? 'Connecting...' : 'Connect X Account'}
+                    {loading ? 'Creating Mock Connection...' : 'Connect X Account (MOCKUP)'}
                   </span>
                   <div className="ml-2 px-2 py-1 rounded bg-green-500/20 border border-green-500/30">
                     <span className="text-xs font-semibold text-green-400">+100 pts</span>
                   </div>
                 </button>
                 
-                <div className="mt-4 p-3 rounded-lg bg-gray-500/10 border border-gray-500/30">
-                  <p className="text-xs text-gray-400 text-center">
-                    🔐 Secure OAuth authentication with X (Twitter)
+                <div className="mt-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-xs text-yellow-400 text-center">
+                    ⚠️ MOCKUP MODE: This creates a fake X connection for demonstration purposes
                   </p>
                 </div>
               </div>

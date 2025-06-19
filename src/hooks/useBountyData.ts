@@ -161,49 +161,31 @@ export const useBountyData = (userId: string) => {
 
       const connectedPlatforms = socialConnections?.map(conn => conn.platform) || []
 
-      // Define available tasks
-      const allTasks: BountyTask[] = [
-        {
-          id: 'join_telegram',
-          title: 'Join Telegram',
-          description: 'Join our official Telegram community',
-          platform: 'telegram',
-          points: 50,
-          status: 'not_started',
-          action_url: 'https://t.me/pumpeddotfun',
-          verification_type: 'manual',
-          requires_connection: true
-        },
-        {
-          id: 'follow_x',
-          title: 'Follow @pumpeddotfun',
-          description: 'Follow @pumpeddotfun on X (Twitter)',
-          platform: 'x',
-          points: 50,
-          status: 'not_started',
-          action_url: 'https://x.com/pumpeddotfun',
-          verification_type: 'api',
-          requires_connection: true
-        },
-        {
-          id: 'repost_launch',
-          title: 'Repost Launch Post',
-          description: 'Repost our latest launch announcement',
-          platform: 'x',
-          points: 75,
-          status: 'not_started',
-          action_url: 'https://x.com/pumpeddotfun/status/123456789',
-          verification_type: 'api',
-          requires_connection: true
-        }
-      ]
+      // Get admin tasks from database
+      const { data: adminTasks } = await supabase
+        .from('admin_tasks')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      // Convert admin tasks to bounty tasks format
+      const allTasks: BountyTask[] = (adminTasks || []).map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        platform: task.platform as 'x' | 'telegram' | 'general',
+        points: task.points,
+        status: 'not_started' as const,
+        action_url: task.action_url,
+        verification_type: task.verification_type as 'manual' | 'api' | 'social',
+        requires_connection: task.requires_connection
+      }))
 
       // Update task statuses based on user's connections and completion
       const updatedTasks = allTasks.map(task => {
         // Check if task is completed based on social connections
         if (task.platform === 'x' && connectedPlatforms.includes('x')) {
           // For X tasks, we'll mark them as completed if user has X connected
-          // In a real implementation, you'd check actual completion via API
           return { ...task, status: 'completed' as const }
         }
         if (task.platform === 'telegram' && connectedPlatforms.includes('telegram')) {
@@ -253,43 +235,41 @@ export const useBountyData = (userId: string) => {
       // Simulate verification delay
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Mock verification - in production, this would check actual completion
-      const isCompleted = Math.random() > 0.3 // 70% success rate for demo
+      // MOCKUP: For X tasks, always succeed if it's a mockup
+      const task = bountyTasks.active.find(t => t.id === taskId)
+      const isCompleted = task?.platform === 'x' ? true : Math.random() > 0.3 // 70% success rate for non-X tasks
 
-      if (isCompleted) {
-        const task = bountyTasks.active.find(t => t.id === taskId)
-        if (task) {
-          setBountyTasks(prev => ({
-            active: prev.active.filter(t => t.id !== taskId),
-            completed: [...prev.completed, { ...task, status: 'completed' }]
-          }))
+      if (isCompleted && task) {
+        setBountyTasks(prev => ({
+          active: prev.active.filter(t => t.id !== taskId),
+          completed: [...prev.completed, { ...task, status: 'completed' }]
+        }))
 
-          // Award points
-          const { error: pointsError } = await supabase.rpc('increment_user_points', {
-            user_id_param: userId,
-            points_to_add: task.points
-          })
+        // Award points
+        const { error: pointsError } = await supabase.rpc('increment_user_points', {
+          user_id_param: userId,
+          points_to_add: task.points
+        })
 
-          if (pointsError) {
-            console.warn('Failed to award points:', pointsError)
-            // Fallback: update points manually
-            const { data: user } = await supabase
+        if (pointsError) {
+          console.warn('Failed to award points:', pointsError)
+          // Fallback: update points manually
+          const { data: user } = await supabase
+            .from('users')
+            .select('current_points')
+            .eq('id', userId)
+            .single()
+
+          if (user) {
+            await supabase
               .from('users')
-              .select('current_points')
+              .update({ current_points: (user.current_points || 0) + task.points })
               .eq('id', userId)
-              .single()
-
-            if (user) {
-              await supabase
-                .from('users')
-                .update({ current_points: (user.current_points || 0) + task.points })
-                .eq('id', userId)
-            }
           }
-
-          // Refresh user stats
-          await loadUserStats()
         }
+
+        // Refresh user stats
+        await loadUserStats()
       } else {
         setBountyTasks(prev => ({
           ...prev,
