@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Wallet, User as UserIcon } from 'lucide-react';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { User as UserIcon } from 'lucide-react';
+import { useAppKit } from '@reown/appkit/react'
 import { useAccount, useDisconnect } from 'wagmi';
 import { useUser } from '../hooks/useUser';
 import Logo from './Logo';
@@ -8,7 +8,7 @@ import ProfileSettingsModal from './ProfileSettingsModal';
 
 const Header = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const { open } = useWeb3Modal();
+  const { open } = useAppKit();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { user, loading } = useUser();
@@ -79,10 +79,7 @@ const Header = () => {
                   </>
                 ) : (
                   <>
-                    <Wallet className="w-4 h-4 text-black" />
-                    <span className="text-sm font-semibold text-black">
-                      {isConnected ? 'Disconnect' : 'Connect Wallet'}
-                    </span>
+                    <w3m-button />
                   </>
                 )}
               </button>
